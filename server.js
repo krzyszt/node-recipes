@@ -1,20 +1,39 @@
 var http = require('http');
 var path = require('path');
-var pages = [
-	{route: '', output: 'I am the best Node Cookbook App the only time and yet'},
-	{route: 'about', output: 'A simple routing with Node example'},
-	{route: 'another page', output: function(){ return 'Here\'s' + this.route}}
-];
+var fs = require('fs');
+var mimeTypes = {
+   '.js' : 'text/javascript',
+   '.html': 'text/html',
+   '.css': 'text/css'
+};
+
 http.createServer(function(req,res){
-	var lookup = path.basename(decodeURI(req.url));
-	pages.forEach(function(page){
-		if(page.route ===lookup){
-			res.writeHead(200,{'Content-Type':'text/html'});
-			res.end(typeof page.output === 'function' ? page.output(): page.output);
-		}
-	});
-	if (!res.finished) {
-		res.writeHead(404);
-		res.end('Page Not Found!');
-	}
+	var lookup = path.basename(decodeURI(req.url)) || 'index.html';
+    var ext = path.extname(lookup);
+    
+    var f = 'content/' + lookup;
+    
+    
+    fs.exists(f, function(exists){
+       
+       if (exists) {
+         fs.readFile(f, function(err,data){
+//            if(err){
+//               res.writeHead(500);
+//               res.end('Server Error');
+//               return;
+//            }
+            var headers = { "Content-type" : mimeTypes[ext] };
+            console.log(data);
+//            res.writeHead(200, headers);
+//            res.end(data);
+         });
+         
+         return ;
+       }
+       res.writeHead(404);
+       res.end();
+    });
+    
 }).listen(8080);
+
