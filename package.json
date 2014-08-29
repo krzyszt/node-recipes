@@ -1,0 +1,11 @@
+{
+  "name": "node-recipes",
+  "version": "0.0.1",
+  "description": "My Node Recipes",
+  "main": "server.js",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mime": "^1.2.11"
+  }
+}

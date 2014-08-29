@@ -1,39 +1,48 @@
 var http = require('http');
 var path = require('path');
 var fs = require('fs');
-var mimeTypes = {
-   '.js' : 'text/javascript',
-   '.html': 'text/html',
-   '.css': 'text/css'
-};
+var mime = require('mime');
+var cache = {};
+
+function send404(res){
+   res.writeHead(404, {"Content-type": "text/html"});
+   res.end("Error 404: resource not found");
+}
+
+function sendFile(res, filePath, fileContents){
+   res.writeHead(200, {"Content-type": "text/html", "mime": mime.lookup(path.basename(filePath))});
+   res.end(fileContents);
+}
+
+function serveStatic(res,cache, absPath){
+   
+   if (cache[absPath]){
+      // The file is cached already
+      sendFile(res, absPath, cache[absPath]);
+   } else {
+      fs.readFile(absPath, function(err, data){
+         if (err){
+            send404(res);
+            return;
+         }
+         cache[absPath] = data;
+         console.log(cache[absPath]);
+         sendFile(res, absPath, data);
+      });
+   }
+}
 
 http.createServer(function(req,res){
-	var lookup = path.basename(decodeURI(req.url)) || 'index.html';
-    var ext = path.extname(lookup);
+	var filePath = false;
     
-    var f = 'content/' + lookup;
+    if (req.url === '/') {
+       filePath = 'content/index.html';
+    } else {
+       filePath = 'content/' + req.url;
+    }
     
-    
-    fs.exists(f, function(exists){
-       
-       if (exists) {
-         fs.readFile(f, function(err,data){
-//            if(err){
-//               res.writeHead(500);
-//               res.end('Server Error');
-//               return;
-//            }
-            var headers = { "Content-type" : mimeTypes[ext] };
-            console.log(data);
-//            res.writeHead(200, headers);
-//            res.end(data);
-         });
-         
-         return ;
-       }
-       res.writeHead(404);
-       res.end();
-    });
+    var absPath = './'+ filePath;
+    serveStatic(res, cache, absPath);
     
 }).listen(8080);
 
